@@ -1,107 +1,49 @@
-local settings = {
-    Color = Color3.fromRGB(255, 0, 0),
-    Size = 5,
-    Transparency = 0.9, -- 1 Visible - 0 Not Visible
-    AutoScale = true
-}
+local FillColor = Color3.fromRGB(175,25,255)
+local DepthMode = "AlwaysOnTop"
+local FillTransparency = 0.5
+local OutlineColor = Color3.fromRGB(255,255,255)
+local OutlineTransparency = 0.8
 
-local space = game:GetService("Workspace")
-local player = game:GetService("Players").LocalPlayer
-local camera = space.CurrentCamera
+local CoreGui = game:FindService("CoreGui")
+local Players = game:FindService("Players")
+local lp = Players.LocalPlayer
+local connections = {}
 
-local function NewText(color, size, transparency)
-    local text = Drawing.new("Text")
-    text.Visible = false
-    text.Text = ""
-    text.Position = Vector2.new(0, 0)
-    text.Color = color
-    text.Size = size
-    text.Center = true
-    text.Transparency = transparency
-    return text
+local Storage = Instance.new("Folder")
+Storage.Parent = CoreGui
+Storage.Name = "Highlight_Storage"
+
+local function Highlight(plr)
+    local Highlight = Instance.new("Highlight")
+    Highlight.Name = plr.Name
+    Highlight.FillColor = FillColor
+    Highlight.DepthMode = DepthMode
+    Highlight.FillTransparency = FillTransparency
+    Highlight.OutlineColor = OutlineColor
+    Highlight.OutlineTransparency = 0.8
+    Highlight.Parent = Storage
+    
+    local plrchar = plr.Character
+    if plrchar then
+        Highlight.Adornee = plrchar
+    end
+
+    connections[plr] = plr.CharacterAdded:Connect(function(char)
+        Highlight.Adornee = char
+    end)
 end
 
-local function Visibility(state, lib)
-    for u, x in pairs(lib) do
-        x.Visible = state
-    end
+Players.PlayerAdded:Connect(Highlight)
+for i,v in next, Players:GetPlayers() do
+    Highlight(v)
 end
 
-local function Size(size, lib)
-    for u, x in pairs(lib) do
-        x.Size = size
+Players.PlayerRemoving:Connect(function(plr)
+    local plrname = plr.Name
+    if Storage[plrname] then
+        Storage[plrname]:Destroy()
     end
-end
-
-for i, v in pairs(game:GetService("Players"):GetPlayers()) do
-    local library = {
-        name = NewText(settings.Color, settings.Size, settings.Transparency)
-    }
-    local function ESP()
-        local connection
-        connection = game:GetService("RunService").RenderStepped:Connect(function()
-            if v.Character ~= nil and v.Character:FindFirstChild("Humanoid") ~= nil and v.Character:FindFirstChild("HumanoidRootPart") ~= nil and v.Name ~= player.Name and v.Character.Humanoid.Health > 0 then
-                local HumanoidRootPart_Pos, OnScreen = camera:WorldToViewportPoint(v.Character.HumanoidRootPart.Position)
-                if OnScreen then
-                    library.name.Text = v.Name
-                    library.name.Position = Vector2.new(HumanoidRootPart_Pos.X, HumanoidRootPart_Pos.Y)
-                    --// AutoScale
-                    if settings.AutoScale then
-                        local distance = (Vector3.new(camera.CFrame.X, camera.CFrame.Y, camera.CFrame.Z) - v.Character.HumanoidRootPart.Position).magnitude
-                        local textsize = math.clamp(1/distance*1000, 2, 30) -- 2 is min text size, 30 is max text size, change to your liking
-                        Size(textsize, library)
-                    else 
-                        Size(settings.Size, library)
-                    end
-                    --//--
-                    Visibility(true, library)
-                else 
-                    Visibility(false, library)
-                end
-            else 
-                Visibility(false, library)
-                if game.Players:FindFirstChild(v.Name) == nil then
-                    connection:Disconnect()
-                end
-            end
-        end)
+    if connections[plr] then
+        connections[plr]:Disconnect()
     end
-    coroutine.wrap(ESP)()
-end
-
-game.Players.PlayerAdded:Connect(function(newplr)
-    print(newplr)
-    local library = {
-        name = NewText(settings.Color, settings.Size, settings.Transparency)
-    }
-    local function ESP()
-        local connection
-        connection = game:GetService("RunService").RenderStepped:Connect(function()
-            if newplr.Character ~= nil and newplr.Character:FindFirstChild("Humanoid") ~= nil and newplr.Character:FindFirstChild("HumanoidRootPart") ~= nil and newplr.Name ~= player.Name and newplr.Character.Humanoid.Health > 0 then
-                local HumanoidRootPart_Pos, OnScreen = camera:WorldToViewportPoint(newplr.Character.HumanoidRootPart.Position)
-                if OnScreen then
-                    library.name.Text = newplr.Name
-                    library.name.Position = Vector2.new(HumanoidRootPart_Pos.X, HumanoidRootPart_Pos.Y)
-                    --// AutoScale
-                    if settings.AutoScale then
-                        local distance = (Vector3.new(camera.CFrame.X, camera.CFrame.Y, camera.CFrame.Z) - newplr.Character.HumanoidRootPart.Position).magnitude
-                        local textsize = math.clamp(1/distance*1000, 2, 30) -- 2 is min text size, 20 is max text size, change to your liking
-                        Size(textsize, library)
-                    else 
-                        Size(settings.Size, library)
-                    end
-                    --//--
-                    Visibility(true, library)
-                else 
-                    Visibility(false, library)
-                end
-            else 
-                Visibility(false, library)
-                if game.Players:FindFirstChild(newplr.Name) == nil then
-                    connection:Disconnect()
-                end
-            end
-        end)
-    end
-    coroutine.wrap(ESP)()
 end)
