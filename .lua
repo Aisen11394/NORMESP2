@@ -1,3 +1,4 @@
+while wait() do
 local FillColor = Color3.fromRGB(175,25,255)
 local DepthMode = "AlwaysOnTop"
 local FillTransparency = 0.5
@@ -42,8 +43,9 @@ Players.PlayerRemoving:Connect(function(plr)
     local plrname = plr.Name
     if Storage[plrname] then
         Storage[plrname]:Destroy()
-    end
+        end
     if connections[plr] then
         connections[plr]:Disconnect()
     end
 end)
+end
